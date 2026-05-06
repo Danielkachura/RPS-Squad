@@ -36,6 +36,7 @@ export function BoardCellComponent({
       data-row={cell.row}
       data-col={cell.col}
       data-testid={`cell-r${cell.row}c${cell.col}`}
+      className={["board-cell", isValidTarget ? "valid-attack-target" : ""].filter(Boolean).join(" ")}
       onClick={isValidMove ? () => onCellClick(cell.row, cell.col) : undefined}
       style={{
         width:          "var(--cell-size)",

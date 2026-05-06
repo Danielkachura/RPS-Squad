@@ -1,433 +1,338 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<title>RPS Animation Timing Strip</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Squad RPS — Animation Timing Strip v2</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: #0f0c0a;
-  color: #fff4e4;
-  font-family: 'Segoe UI', sans-serif;
-  font-size: 13px;
-  min-height: 100vh;
-  padding: 20px;
-}
-h1 { font-size: 1.2rem; font-weight: 800; color: #f2cf88; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-.subtitle { color: #d6bea5; font-size: 0.75rem; margin-bottom: 18px; letter-spacing: 1px; }
-
-.phase-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-.phase-tab {
-  padding: 6px 14px; border-radius: 999px;
-  border: 1px solid rgba(255,224,185,0.15);
-  background: rgba(255,255,255,0.04);
-  color: #d6bea5; cursor: pointer;
-  font-size: 0.72rem; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  transition: all 150ms ease;
-}
-.phase-tab.active { background: rgba(242,207,136,0.18); border-color: rgba(242,207,136,0.6); color: #f2cf88; }
-
-.legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
-.legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.68rem; color: #d6bea5; }
-.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
-
-.info-card { background: rgba(143,215,208,0.08); border: 1px solid rgba(143,215,208,0.2); border-radius: 14px; padding: 12px 16px; margin-bottom: 14px; }
-.info-card h3 { font-size: 0.82rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
-.info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px; }
-.info-row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px solid rgba(255,244,228,0.06); }
-.info-row span:first-child { color: #d6bea5; font-size: 0.7rem; }
-.info-row strong { color: #f2cf88; font-size: 0.72rem; text-align: left; }
-
-.playback-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
-.play-btn { padding: 7px 20px; border-radius: 999px; border: none; background: linear-gradient(135deg, #f2cf88, #8fd7d0); color: #1a0e08; font-weight: 800; font-size: 0.8rem; cursor: pointer; }
-.frame-counter { font-size: 0.8rem; color: #f2cf88; font-weight: 700; min-width: 90px; }
-.fps-info { color: #8fd7d0; font-size: 0.72rem; }
-input[type=range] { -webkit-appearance: none; height: 4px; border-radius: 2px; background: rgba(255,244,228,0.15); flex: 1; min-width: 120px; cursor: pointer; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #f2cf88; }
-
-.timeline-panel { background: linear-gradient(180deg, rgba(61,36,29,0.94), rgba(25,17,15,0.94)); border: 1px solid rgba(255,225,185,0.12); border-radius: 18px; padding: 16px; margin-bottom: 16px; overflow-x: auto; }
-.tl-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.tl-phase-badge { padding: 4px 12px; border-radius: 999px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
-.tl-fps { color: #8fd7d0; font-size: 0.72rem; }
-
-.frame-ruler { display: flex; margin-bottom: 10px; padding-left: 110px; }
-.frame-tick { flex: 1; text-align: center; font-size: 0.6rem; color: rgba(255,244,228,0.35); border-left: 1px solid rgba(255,244,228,0.1); padding-top: 2px; }
-
-.track-row { display: flex; align-items: center; margin-bottom: 8px; }
-.track-label { width: 110px; min-width: 110px; font-size: 0.68rem; font-weight: 700; color: #d6bea5; letter-spacing: 0.06em; text-transform: uppercase; display: flex; align-items: center; gap: 5px; flex-shrink: 0; padding-right: 8px; }
-.track-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-
-.track-bar-area { height: 28px; position: relative; border-radius: 6px; background: rgba(255,255,255,0.03); }
-.seg { position: absolute; top: 50%; transform: translateY(-50%); height: 6px; border-radius: 3px; opacity: 0.6; }
-.kf { position: absolute; top: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 11px; height: 11px; border: 2px solid rgba(255,255,255,0.9); border-radius: 2px; cursor: pointer; z-index: 2; }
-.kf:hover { outline: 2px solid white; }
-
-.kf-label { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; color: rgba(255,244,228,0.7); white-space: nowrap; pointer-events: none; display: none; }
-.kf:hover .kf-label { display: block; }
-
-.tracks-wrapper { position: relative; }
-.playhead-global { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(242,207,136,0.75); pointer-events: none; z-index: 5; }
-
-.section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.18em; color: #8fd7d0; margin: 18px 0 8px; border-bottom: 1px solid rgba(143,215,208,0.15); padding-bottom: 4px; }
-
-.easing-ref { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
-.easing-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,224,185,0.1); border-radius: 10px; padding: 10px; }
-.easing-card strong { display: block; font-size: 0.72rem; color: #f2cf88; margin-bottom: 5px; }
-.easing-card code { font-size: 0.62rem; color: #8fd7d0; font-family: monospace; }
-.easing-card svg { display: block; margin: 6px auto 0; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:#0a0b0f;font-family:'Courier New',monospace;color:#e8dcc8;overflow-x:hidden}
+:root{--gold:#f2c96e;--red:#e84343;--blue:#3d8fe8;--strip-bg:#111218;--border:#2a2d3a;--muted:#6b7280}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.top-bar{background:#0e0f14;border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.logo{font-size:20px;font-weight:700;color:var(--gold);letter-spacing:4px;white-space:nowrap}
+.logo span{color:var(--red)}
+.tab-row{display:flex;gap:4px;flex-wrap:wrap}
+.tab{padding:5px 14px;border-radius:3px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:'Courier New',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;transition:all 120ms}
+.tab:hover{border-color:var(--gold);color:var(--gold)}
+.tab.active{background:var(--gold);color:#0a0b0f;border-color:var(--gold);font-weight:700}
+.main{display:grid;grid-template-columns:1fr 260px;flex:1;gap:0}
+@media(max-width:900px){.main{grid-template-columns:1fr}}
+.content{padding:24px;overflow-y:auto}
+.sidebar{background:#0e0f14;border-left:1px solid var(--border);padding:18px;display:flex;flex-direction:column;gap:18px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto}
+.panel-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.sidebar-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.info-row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid rgba(42,45,58,0.4);font-size:10px}
+.info-row span{color:var(--muted)}
+.info-row strong{color:#e8dcc8;text-align:right;font-weight:normal}
+.legend-row{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--muted);margin-bottom:5px}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.zone-badge{font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:2px;margin-bottom:5px;display:inline-block}
+.zone-ai{background:rgba(61,143,232,0.15);color:var(--blue);border:1px solid rgba(61,143,232,0.35)}
+.zone-player{background:rgba(232,67,67,0.15);color:var(--red);border:1px solid rgba(232,67,67,0.35)}
+.zone-neutral{background:rgba(100,120,100,0.15);color:#6b7280;border:1px solid rgba(100,120,100,0.3)}
+.board-wrapper{display:flex;gap:6px;align-items:stretch}
+.row-labels{display:flex;flex-direction:column;justify-content:space-between;padding:3px 0}
+.row-label{font-size:9px;color:var(--muted);text-align:right;width:14px;line-height:1}
+.col-labels{display:flex;justify-content:space-around;padding:0 3px;margin-top:4px}
+.col-label{font-size:9px;color:var(--muted);text-align:center;flex:1}
+.board-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;background:#1a1c24;border:2px solid #2a2d3a;border-radius:4px;padding:3px;flex:1}
+.cell{width:100%;aspect-ratio:1;border-radius:2px;display:flex;align-items:center;justify-content:center;position:relative;transition:transform 120ms;cursor:default}
+.cell.ai-zone{background:rgba(61,143,232,0.10);border:1px solid rgba(61,143,232,0.2)}
+.cell.player-zone{background:rgba(232,67,67,0.10);border:1px solid rgba(232,67,67,0.2)}
+.cell.neutral{background:#141620;border:1px solid #1c1f2e}
+.cell.has-unit:hover{transform:scale(1.12);z-index:2;cursor:pointer}
+.unit-icon{font-size:18px;line-height:1}
+.unit-flag{position:absolute;top:1px;right:2px;font-size:9px}
+.unit-decoy{position:absolute;top:2px;right:2px;width:8px;height:8px;background:#9333ea;border-radius:1px;transform:rotate(45deg);border:1px solid rgba(255,255,255,0.4)}
+.board-stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:12px}
+.stat-box{background:#111318;border:1px solid var(--border);border-radius:3px;padding:8px 10px;text-align:center}
+.stat-box .n{font-size:20px;font-weight:700;color:var(--gold);line-height:1}
+.stat-box .l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+.strip-section{display:flex;flex-direction:column;gap:14px}
+.strip-card{background:var(--strip-bg);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.strip-header{background:#13151e;padding:9px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.strip-name{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);flex:1}
+.strip-meta{font-size:10px;color:var(--muted);letter-spacing:0.5px;white-space:nowrap}
+.team-badge{font-size:9px;padding:2px 8px;border-radius:2px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.badge-red{background:rgba(232,67,67,0.15);color:var(--red);border:1px solid rgba(232,67,67,0.35)}
+.badge-blue{background:rgba(61,143,232,0.15);color:var(--blue);border:1px solid rgba(61,143,232,0.35)}
+.badge-gold{background:rgba(242,201,110,0.12);color:var(--gold);border:1px solid rgba(242,201,110,0.3)}
+.frames-row{display:flex;align-items:flex-end;gap:4px;padding:14px 16px 8px;overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.frame-cell{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0}
+.frame-img-wrap{width:76px;height:76px;background:transparent;border-radius:3px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;transition:border-color 150ms,background 150ms;cursor:pointer}
+.frame-img-wrap:hover,.frame-img-wrap.active{border-color:var(--gold);background:rgba(242,201,110,0.06)}
+.frame-img-wrap img{width:100%;height:100%;object-fit:contain;mix-blend-mode:screen;filter:contrast(1.05) saturate(1.1)}
+.frame-img-wrap .fallback{font-size:30px;line-height:1}
+.frame-num{font-size:9px;color:var(--muted);letter-spacing:1px}
+.frame-label{font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;text-align:center;max-width:76px;line-height:1.3}
+.vs-gap{width:20px;display:flex;align-items:center;justify-content:center;height:76px;font-size:11px;color:var(--gold);font-weight:700;flex-shrink:0}
+.timing-bar-wrap{margin:0 16px 4px}
+.timing-bar{height:3px;background:#1e2030;border-radius:2px;position:relative;overflow:hidden}
+.timing-fill{position:absolute;left:0;top:0;bottom:0;background:var(--gold);border-radius:2px;transition:width 100ms linear}
+.playback{background:#0e0f14;border-top:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:10px}
+.play-btn{padding:4px 16px;border-radius:2px;border:1px solid var(--gold);background:transparent;color:var(--gold);font-family:'Courier New',monospace;font-size:11px;cursor:pointer;letter-spacing:1px;transition:all 120ms;white-space:nowrap}
+.play-btn:hover,.play-btn.playing{background:var(--gold);color:#0a0b0f}
+.scrub-input{flex:1;height:3px;-webkit-appearance:none;appearance:none;background:#2a2d3a;border-radius:2px;cursor:pointer;outline:none}
+.scrub-input::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--gold);cursor:pointer}
+.frame-ctr{font-size:10px;color:var(--muted);min-width:48px;text-align:right}
+.src-img-wrap{padding:14px 16px}
+.src-img-wrap img{width:100%;border-radius:3px;border:1px solid var(--border);mix-blend-mode:luminosity;filter:contrast(1.1) saturate(1.05);display:block}
+.missing{padding:20px;text-align:center;color:var(--muted);font-size:11px;border:1px dashed var(--border);border-radius:3px;line-height:1.8}
+.ref-table{width:100%;border-collapse:collapse;font-size:10px}
+.ref-table th{text-align:left;padding:6px 10px;color:var(--muted);letter-spacing:1px;font-weight:normal;border-bottom:1px solid var(--border)}
+.ref-table td{padding:5px 10px}
+.ref-table tr{border-bottom:1px solid rgba(42,45,58,0.4)}
+.ref-table tr:nth-child(even){background:rgba(255,255,255,0.015)}
 </style>
 </head>
 <body>
-
-<h1>🎬 Animation Timing Strip — RPS Online</h1>
-<div class="subtitle">Rock Paper Scissors Online · Player Action Animations · Based on styles.css + public assets</div>
-
-<div class="phase-tabs" id="phaseTabs"></div>
-
-<div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:#f2cf88"></div> Scale / Transform</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#8fd7d0"></div> Opacity / Fade</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f08c7d"></div> Filter / Color</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#d5a4ff"></div> Position / Translate</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#9fdd8e"></div> Rotate / Special</div>
-  <div class="legend-item">◆ Keyframe (hover for value)</div>
-</div>
-
-<div class="info-card">
-  <h3 id="infoTitle" style="color:#f2cf88">בחר שלב אנימציה</h3>
-  <div class="info-grid" id="infoGrid"></div>
-</div>
-
-<div class="playback-row">
-  <button class="play-btn" id="playBtn">▶ Play</button>
-  <input type="range" id="scrubber" min="0" max="100" value="0">
-  <div class="frame-counter" id="frameCounter">F 0 / 0</div>
-  <div class="fps-info" id="fpsInfo">24 fps</div>
-</div>
-
-<div class="timeline-panel">
-  <div class="tl-header">
-    <span class="tl-phase-badge" id="phaseBadge">Phase</span>
-    <span class="tl-fps" id="tlFps">24 fps</span>
+<div class="app">
+  <div class="top-bar">
+    <div class="logo">Squad<span>RPS</span></div>
+    <div class="tab-row" id="tabRow">
+      <button class="tab active" data-view="board">5x6 Board</button>
+      <button class="tab" data-view="attack">Attack Strips</button>
+      <button class="tab" data-view="moves">Movement</button>
+      <button class="tab" data-view="judge">Judge</button>
+      <button class="tab" data-view="roles_red">Roles Red</button>
+      <button class="tab" data-view="roles_blue">Roles Blue</button>
+      <button class="tab" data-view="ref">Full Ref</button>
+    </div>
   </div>
-  <div id="frameRulerWrap" style="padding-left:110px;">
-    <div class="frame-ruler" id="frameRuler"></div>
-  </div>
-  <div class="tracks-wrapper" id="tracksWrapper">
-    <div class="playhead-global" id="playheadGlobal" style="left:110px"></div>
-  </div>
-</div>
-
-<div class="section-title">📐 Easing Reference — Bezier Values Used</div>
-<div class="easing-ref">
-  <div class="easing-card">
-    <strong>ease-in-out (sine)</strong>
-    <code>0.42, 0, 0.58, 1</code>
-    <svg width="100" height="40" viewBox="0 0 100 40">
-      <path d="M5,35 C25,35 30,5 50,5 S75,35 95,5" fill="none" stroke="#8fd7d0" stroke-width="2"/>
-    </svg>
-  </div>
-  <div class="easing-card">
-    <strong>Spring (unitSelect)</strong>
-    <code>0.34, 1.56, 0.64, 1</code>
-    <svg width="100" height="40" viewBox="0 0 100 40">
-      <path d="M5,35 C20,35 25,-5 55,8 S80,12 95,5" fill="none" stroke="#f2cf88" stroke-width="2"/>
-    </svg>
-  </div>
-  <div class="easing-card">
-    <strong>ease-in (windUp)</strong>
-    <code>0.42, 0, 1, 1</code>
-    <svg width="100" height="40" viewBox="0 0 100 40">
-      <path d="M5,35 C5,35 30,34 95,5" fill="none" stroke="#f08c7d" stroke-width="2"/>
-    </svg>
-  </div>
-  <div class="easing-card">
-    <strong>ease-out (weaponReveal)</strong>
-    <code>0, 0, 0.58, 1</code>
-    <svg width="100" height="40" viewBox="0 0 100 40">
-      <path d="M5,35 C70,35 95,6 95,5" fill="none" stroke="#d5a4ff" stroke-width="2"/>
-    </svg>
-  </div>
-  <div class="easing-card">
-    <strong>ease-in-out (idle)</strong>
-    <code>default ease-in-out</code>
-    <svg width="100" height="40" viewBox="0 0 100 40">
-      <path d="M5,35 C20,35 30,5 50,5 S80,35 95,5" fill="none" stroke="#9fdd8e" stroke-width="2"/>
-    </svg>
-  </div>
-  <div class="easing-card">
-    <strong>Linear (heroJump)</strong>
-    <code>steps(4) — sprite</code>
-    <svg width="100" height="40" viewBox="0 0 100 40">
-      <polyline points="5,35 30,35 30,22 55,22 55,13 80,13 80,5 95,5" fill="none" stroke="#f2cf88" stroke-width="2"/>
-    </svg>
+  <div class="main">
+    <div class="content" id="mainContent"></div>
+    <div class="sidebar">
+      <div><div class="sidebar-title">Strip info</div><div id="sidebarInfo"></div></div>
+      <div>
+        <div class="sidebar-title">Legend</div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--gold)"></div>Active frame</div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--red)"></div>Red / Player team</div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--blue)"></div>Blue / AI team</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#9333ea"></div>Decoy role</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#22c55e"></div>Flag bearer</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#374151"></div>Neutral zone</div>
+      </div>
+      <div>
+        <div class="sidebar-title">Board PRD spec</div>
+        <div class="info-row"><span>Grid</span><strong>5 cols x 6 rows</strong></div>
+        <div class="info-row"><span>Total tiles</span><strong>30</strong></div>
+        <div class="info-row"><span>Player rows</span><strong>1-2 (10 units)</strong></div>
+        <div class="info-row"><span>AI rows</span><strong>5-6 (10 units)</strong></div>
+        <div class="info-row"><span>Neutral rows</span><strong>3-4 (10 empty)</strong></div>
+        <div class="info-row"><span>Special roles</span><strong>1 Flag + 1 Decoy</strong></div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-const TRACK_W = 680;
+const TIMERS={};
+const INFO={
+  board:{rows:[['Grid','5 cols x 6 rows'],['Total tiles','30'],['Player units','10'],['AI units','10'],['Neutral zone','Rows 3-4 (10 empty)']]},
+  attack:{rows:[['Source','moovment/attack player.png'],['Sequences','3'],['Frames each','6'],['Phases','Idle-Windup-Strike-Impact-Win-End'],['Frame time','80ms'],['Total','480ms/duel']]},
+  moves:{rows:[['Source','moovment/timing.png'],['Teams','Red + Blue'],['Idle frames','6'],['Walk frames','6'],['Jump frames','6'],['Attack frames','8'],['Hit frames','4'],['Die frames','6']]},
+  judge:{rows:[['Source','moovment/judge.png'],['Character','Yellow dragon referee'],['Frames','5'],['Total','1500ms'],['Trigger','Match start coin-flip']]},
+  roles_red:{rows:[['Source','moovment/dicoy flag only red.png'],['Flag walk','6 frames'],['Decoy walk','6 frames'],['Idle anims','4 types'],['Weapon poses','Rock/Paper/Scissors']]},
+  roles_blue:{rows:[['Source','moovment/dickoy flag wait ex.png'],['Flag walk','6 frames'],['Decoy walk','6 frames'],['Idle anims','4 types'],['Board indicators','5 states']]},
+  ref:{rows:[['Total strips','Red 11 + Blue 11'],['FPS','24'],['Idle mode','loop'],['Attack mode','once'],['Die mode','once'],['Sprite','CSS steps()']]}
+};
 
-const PHASES = [
-  {
-    id:'idle', label:'😴 Idle Sway', fps:24, frames:58, color:'#8fd7d0', badgeBg:'rgba(143,215,208,0.18)',
-    info:{'אנימציה':'idleSway','משך':'2.4s · 58 frames','Easing':'ease-in-out','לולאה':'infinite','Class':'.unit-idle-sway','Delay':'--sway-offset * 1s','טריגר':'תמיד — יחידה ממתינה','נכסים':'character_*_idle_nobg.png'},
-    tracks:[
-      {label:'TRANSLATE Y',color:'#d5a4ff', kfs:[{f:0,v:'0px'},{f:17,v:'-2px'},{f:41,v:'-1px'},{f:58,v:'0px'}]},
-      {label:'ROTATE',color:'#9fdd8e', kfs:[{f:0,v:'0deg'},{f:17,v:'0.4deg'},{f:41,v:'-0.3deg'},{f:58,v:'0deg'}]}
-    ]
-  },
-  {
-    id:'select', label:'👆 Unit Select', fps:24, frames:5, color:'#f2cf88', badgeBg:'rgba(242,207,136,0.18)',
-    info:{'אנימציה':'unitSelect','משך':'220ms · 5 frames','Easing':'cubic-bezier(0.34,1.56,0.64,1)','Class':'.unit-selected','סוג':'forwards (once)','טריגר':'לחיצה על יחידה','אפקט נוסף':'outline 3px + drop-shadow 12px','צבע outline':'#fde68a'},
-    tracks:[
-      {label:'SCALE',color:'#f2cf88', kfs:[{f:0,v:'1'},{f:2,v:'1.22 ↑'},{f:3.5,v:'1.14'},{f:5,v:'1.12'}]},
-      {label:'ROTATE',color:'#9fdd8e', kfs:[{f:0,v:'0deg'},{f:2,v:'-2deg'},{f:3.5,v:'1deg'},{f:5,v:'0deg'}]},
-      {label:'OUTLINE',color:'#8fd7d0', kfs:[{f:0,v:'none'},{f:0.5,v:'3px solid gold'}]}
-    ]
-  },
-  {
-    id:'windup', label:'⚔️ Wind-Up', fps:24, frames:7, color:'#f08c7d', badgeBg:'rgba(240,140,125,0.18)',
-    info:{'אנימציה':'windUpPose','משך':'300ms · 7 frames','Easing':'ease-in (forwards)','Class':'.duel-windup img','גודל':'72×72px','טריגר':'תחילת דואל','אודיו':'battle_start.wav'},
-    tracks:[
-      {label:'SCALE',color:'#f2cf88', kfs:[{f:0,v:'1'},{f:3.5,v:'1.06'},{f:7,v:'1.08'}]},
-      {label:'ROTATE',color:'#9fdd8e', kfs:[{f:0,v:'0deg'},{f:3.5,v:'-10deg'},{f:7,v:'-14deg'}]},
-      {label:'TRANSLATE X',color:'#d5a4ff', kfs:[{f:0,v:'0px'},{f:3.5,v:'-4px'},{f:7,v:'-6px'}]}
-    ]
-  },
-  {
-    id:'reveal', label:'✨ Weapon Reveal', fps:24, frames:5, color:'#9fdd8e', badgeBg:'rgba(159,221,142,0.18)',
-    info:{'אנימציה':'weaponReveal','משך':'200ms · 5 frames','Easing':'cubic-bezier(0.34,1.56,0.64,1)','Class':'.weapon-reveal','טריגר':'גילוי נשק בדואל','אודיו':'rock/paper/scissors.wav','נכסים':'rock_nobg / paper_flat_nobg / scissors_nobg'},
-    tracks:[
-      {label:'OPACITY',color:'#8fd7d0', kfs:[{f:0,v:'0'},{f:3,v:'1'},{f:5,v:'1'}]},
-      {label:'SCALE',color:'#f2cf88', kfs:[{f:0,v:'0.4'},{f:3,v:'1.18 ⬆'},{f:5,v:'1'}]},
-      {label:'TRANSLATE Y',color:'#d5a4ff', kfs:[{f:0,v:'10px'},{f:3,v:'-4px'},{f:5,v:'0px'}]},
-      {label:'ROTATE',color:'#f08c7d', kfs:[{f:0,v:'-15deg'},{f:3,v:'4deg'},{f:5,v:'0deg'}]}
-    ]
-  },
-  {
-    id:'result', label:'🏆 Win / Lose', fps:24, frames:10, color:'#9fdd8e', badgeBg:'rgba(159,221,142,0.18)',
-    info:{'Win weapon':'weaponWin · 250ms','Lose weapon':'weaponLose · 250ms','Win char':'charWin · 400ms','Lose char':'charLose · 350ms','Tie':'tieShake + charTie','Win filter':'brightness(1.6) + gold shadow','Lose filter':'grayscale(1) + opacity 0.25','אודיו':'you_win.wav / you_lose.wav'},
-    tracks:[
-      {label:'WIN SCALE',color:'#9fdd8e', kfs:[{f:0,v:'1'},{f:3,v:'1.35 ★'},{f:6,v:'1.15'}]},
-      {label:'WIN BRIGHT',color:'#f2cf88', kfs:[{f:0,v:'100%'},{f:3,v:'160% ☀'},{f:6,v:'120%'}]},
-      {label:'LOSE SCALE',color:'#f08c7d', kfs:[{f:0,v:'1'},{f:6,v:'0.55 ↓'}]},
-      {label:'LOSE OPACITY',color:'#8fd7d0', kfs:[{f:0,v:'1'},{f:6,v:'0.25 💀'}]},
-      {label:'CHAR Y WIN',color:'#d5a4ff', kfs:[{f:0,v:'0px'},{f:2.5,v:'-12px'},{f:5,v:'-6px'},{f:7.5,v:'-10px'},{f:10,v:'0px'}]}
-    ]
-  },
-  {
-    id:'landing', label:'🦵 Unit Land', fps:24, frames:7, color:'#d5a4ff', badgeBg:'rgba(213,164,255,0.18)',
-    info:{'אנימציה':'unitLand','משך':'280ms · 7 frames','Easing':'ease-out (forwards)','Class':'.unit-landing','טריגר':'נחיתה על תא לוח','אודיו':'jump.wav + step.mp4','תיאור':'squash on impact then restore'},
-    tracks:[
-      {label:'SCALE',color:'#f2cf88', kfs:[{f:0,v:'1.1'},{f:3.8,v:'1.09'},{f:5.6,v:'0.94 ↓'},{f:7,v:'1.0'}]},
-      {label:'TRANSLATE Y',color:'#d5a4ff', kfs:[{f:0,v:'-7px'},{f:3.8,v:'0px'},{f:7,v:'0px'}]}
-    ]
-  },
-  {
-    id:'death', label:'💀 Unit Die', fps:24, frames:12, color:'#f08c7d', badgeBg:'rgba(240,140,125,0.18)',
-    info:{'אנימציה':'unitDie + weaponHide','unitDie משך':'~300ms','weaponHide משך':'500ms · 12f','Easing':'ease-in','Class':'.weapon-hiding','אפקט':'scale(0.7) + translateY + blur(2px)','טריגר':'יחידה מובסת בדואל'},
-    tracks:[
-      {label:'OPACITY',color:'#8fd7d0', kfs:[{f:0,v:'1'},{f:12,v:'0'}]},
-      {label:'SCALE',color:'#f2cf88', kfs:[{f:0,v:'1'},{f:12,v:'0.65'}]},
-      {label:'TRANSLATE Y',color:'#d5a4ff', kfs:[{f:0,v:'0px'},{f:7,v:'4px'},{f:12,v:'12px'}]},
-      {label:'BLUR',color:'#f08c7d', kfs:[{f:0,v:'0px'},{f:9,v:'1px'},{f:12,v:'2px'}]}
-    ]
-  },
-  {
-    id:'timer', label:'⏱ Timer Urgent', fps:24, frames:15, color:'#f08c7d', badgeBg:'rgba(240,140,125,0.18)',
-    info:{'אנימציה':'timerUrgent','משך':'600ms · 15 frames','Easing':'ease-in-out','לולאה':'infinite','Class':'.reveal-timer--urgent','צבע':'#fb7185 (danger)','טריגר':'טיימר < 3 שניות'},
-    tracks:[
-      {label:'OPACITY',color:'#8fd7d0', kfs:[{f:0,v:'1'},{f:7.5,v:'0.65 dim'},{f:15,v:'1'}]},
-      {label:'SCALE',color:'#f2cf88', kfs:[{f:0,v:'1'},{f:7.5,v:'1.08 ⚡'},{f:15,v:'1'}]}
-    ]
-  },
-  {
-    id:'decoy', label:'🛡 Decoy Pulse', fps:24, frames:17, color:'#d5a4ff', badgeBg:'rgba(213,164,255,0.18)',
-    info:{'אנימציה':'decoyShield','משך':'700ms · 17 frames','Easing':'ease-out','לולאה':'infinite','Class':'.decoy-shield-pulse','צבע':'rgba(213,164,255,0.65)','טריגר':'תא decoy מוצג','אפקט':'box-shadow ripple'},
-    tracks:[
-      {label:'BOX SHADOW',color:'#d5a4ff', kfs:[{f:0,v:'0px spread'},{f:12,v:'16px spread'},{f:17,v:'0px'}]},
-      {label:'SCALE',color:'#f2cf88', kfs:[{f:0,v:'1'},{f:12,v:'1.05'},{f:17,v:'1'}]}
-    ]
-  },
-  {
-    id:'flagdrop', label:'🚩 Flag Drop', fps:24, frames:18, color:'#f2cf88', badgeBg:'rgba(242,207,136,0.18)',
-    info:{'אנימציה':'flagDrop + boardDim','flagDrop delay':'200ms','משך':'350ms · 8 frames (+ 250ms dim)','Easing':'cubic-bezier(0.22,1,0.36,1)','Class':'.flag-death-text','נכסים':'flag_blue_nobg / flag_red_nobg','טריגר':'סוף משחק — דגל נפל'},
-    tracks:[
-      {label:'OVERLAY OPC',color:'#8fd7d0', kfs:[{f:0,v:'0'},{f:6,v:'1 (dim)'}]},
-      {label:'FLAG OPACITY',color:'#f2cf88', kfs:[{f:5,v:'0'},{f:10,v:'1'},{f:18,v:'1'}]},
-      {label:'FLAG Y',color:'#d5a4ff', kfs:[{f:5,v:'-40px'},{f:11,v:'5px bounce'},{f:18,v:'0px'}]},
-      {label:'FLAG SCALE',color:'#9fdd8e', kfs:[{f:5,v:'0.8'},{f:11,v:'1.06'},{f:18,v:'1'}]}
-    ]
-  },
-  {
-    id:'herojump', label:'🕹 Hero Jump', fps:24, frames:21, color:'#f2cf88', badgeBg:'rgba(242,207,136,0.18)',
-    info:{'אנימציה':'heroJump','משך':'500ms · 12 frames','Easing':'steps(4) — sprite','Class':'.hero-jump-sprite','נכסים':'hero_blue_jump_sprites.jpg / hero_red_jump_sprites.png','שיטה':'background-position 0%→100%','לולאה':'infinite','תיאור':'4 sprite frames, stepped'},
-    tracks:[
-      {label:'BG POSITION',color:'#f2cf88', kfs:[{f:0,v:'0% (frame1)'},{f:5,v:'33% (frame2)'},{f:10,v:'66% (frame3)'},{f:15,v:'100% (frame4)'},{f:21,v:'0% (loop)'}]},
-      {label:'OPACITY',color:'#8fd7d0', kfs:[{f:0,v:'1'},{f:21,v:'1'}]}
-    ]
+function setInfo(k){
+  document.getElementById('sidebarInfo').innerHTML=(INFO[k]||INFO.board).rows.map(([a,b])=>`<div class="info-row"><span>${a}</span><strong>${b}</strong></div>`).join('');
+}
+
+function mkF(labels,fallbacks){return labels.map((l,i)=>({label:l,fallback:fallbacks?fallbacks[i]:'?'}));}
+
+function makeStrip({id,name,badge,bc,frames,fps,ms,note}){
+  const fc=frames.length;
+  let h=`<div class="strip-card"><div class="strip-header"><span class="strip-name">${name}</span><span class="team-badge ${bc}">${badge}</span><span class="strip-meta">${fc} FRAMES · ${ms}ms · ${fps}fps</span></div><div class="frames-row" id="fr-${id}">`;
+  frames.forEach((f,i)=>{
+    h+=`<div class="frame-cell"><div class="frame-img-wrap${i===0?' active':''}" id="fi-${id}-${i}" title="F${i+1}: ${f.label}"><span class="fallback">${f.fallback||'?'}</span></div><div class="frame-num">F${i+1}</div><div class="frame-label">${f.label}</div></div>`;
+    if(f.vs)h+=`<div class="vs-gap">${f.vs}</div>`;
+  });
+  h+=`</div><div class="timing-bar-wrap"><div class="timing-bar"><div class="timing-fill" id="tb-${id}" style="width:${100/fc}%"></div></div></div><div class="playback"><button class="play-btn" data-id="${id}" data-fc="${fc}" data-ms="${Math.round(ms/fc)}">play</button><input type="range" class="scrub-input" min="0" max="${fc-1}" value="0" data-id="${id}" data-fc="${fc}"><span class="frame-ctr" id="fc-${id}">1 / ${fc}</span></div>`;
+  if(note)h+=`<div style="padding:5px 16px 10px;font-size:9px;color:var(--muted);line-height:1.6">${note}</div>`;
+  h+=`</div>`;return h;
+}
+
+function makeSrc(src,alt){
+  return `<div class="strip-card" style="border-color:rgba(242,201,110,0.25)"><div class="strip-header"><span class="strip-name">SOURCE IMAGE</span><span class="strip-meta">mix-blend-mode: luminosity</span></div><div class="src-img-wrap"><img src="${src}" alt="${alt}" onerror="this.outerHTML='<div class=missing>${alt} &mdash; place in /public/moovment/</div>'"></div></div>`;
+}
+
+function renderBoard(){
+  const units=[
+    {r:6,c:1,w:'📄'},{r:6,c:2,w:'🪨'},{r:6,c:3,w:'✂️',flag:true},{r:6,c:4,w:'📄'},{r:6,c:5,w:'🪨'},
+    {r:5,c:1,w:'✂️'},{r:5,c:2,w:'📄'},{r:5,c:3,w:'🪨'},{r:5,c:4,w:'✂️',decoy:true},{r:5,c:5,w:'📄'},
+    {r:2,c:1,w:'🪨'},{r:2,c:2,w:'✂️',flag:true},{r:2,c:3,w:'📄'},{r:2,c:4,w:'🪨'},{r:2,c:5,w:'✂️'},
+    {r:1,c:1,w:'📄'},{r:1,c:2,w:'🪨'},{r:1,c:3,w:'✂️'},{r:1,c:4,w:'📄',decoy:true},{r:1,c:5,w:'🪨'}
+  ];
+  const umap={};units.forEach(u=>umap[`${u.r}-${u.c}`]=u);
+  let h=`<div class="panel-title">5x6 BOARD LAYOUT — 30 tiles · 10 units per side</div>
+  <span class="zone-badge zone-ai">AI ZONE rows 5-6</span><br><br>
+  <div class="board-wrapper"><div class="row-labels">`;
+  for(let r=6;r>=1;r--)h+=`<div class="row-label">${r}</div>`;
+  h+=`</div><div class="board-grid">`;
+  for(let r=6;r>=1;r--){
+    const zone=r>=5?'ai-zone':r<=2?'player-zone':'neutral';
+    for(let c=1;c<=5;c++){
+      const u=umap[`${r}-${c}`];
+      h+=`<div class="cell ${zone}${u?' has-unit':''}" title="Row ${r} Col ${c}${u?' · '+u.w+(u.flag?' FLAG':'')+(u.decoy?' DECOY':''):' empty'}">`;
+      if(u){h+=`<span class="unit-icon">${u.w}</span>`;if(u.flag)h+=`<span class="unit-flag">🚩</span>`;if(u.decoy)h+=`<div class="unit-decoy"></div>`;}
+      h+=`</div>`;
+    }
   }
-];
+  h+=`</div></div><div class="col-labels">`;
+  for(let c=1;c<=5;c++)h+=`<div class="col-label">${c}</div>`;
+  h+=`</div><br><span class="zone-badge zone-player">PLAYER ZONE rows 1-2</span>`;
+  h+=`<div class="board-stats"><div class="stat-box"><div class="n">30</div><div class="l">tiles</div></div><div class="stat-box"><div class="n">5x6</div><div class="l">grid</div></div><div class="stat-box"><div class="n">10</div><div class="l">units/side</div></div><div class="stat-box"><div class="n">10</div><div class="l">neutral</div></div></div>`;
+  h+=`<div style="margin-top:16px;background:#111318;border:1px solid var(--border);border-radius:3px;padding:12px 14px"><div style="font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">PRD board spec</div><pre style="font-size:10px;color:#9ca3af;line-height:2;font-family:'Courier New',monospace">Row 6 | AI   AI   AI   AI   AI   <- AI back row
+Row 5 | AI   AI   AI   AI   AI   <- AI front row
+Row 4 | .    .    .    .    .    <- neutral zone
+Row 3 | .    .    .    .    .    <- neutral zone
+Row 2 | P1   P1   P1   P1   P1  <- Player front row
+Row 1 | P1   P1   P1   P1   P1  <- Player back row
+         C1   C2   C3   C4   C5</pre><div style="margin-top:10px;font-size:10px;color:var(--muted)">Flag: instant loss when defeated &nbsp;·&nbsp; Decoy: absorbs attacks &nbsp;·&nbsp; Rows 3-4: neutral battle zone</div></div>`;
+  return h;
+}
 
-let current = PHASES[0];
-let frame = 0;
-let playing = false;
-let rafId = null;
-let t0 = null;
+function renderAttack(){
+  let h=`<div class="panel-title">ATTACK TIMING STRIPS — attack player.png</div><div class="strip-section">`;
+  h+=makeStrip({id:'sc_pk',name:'SCISSORS CUTS PAPER',badge:'SCISSORS WIN',bc:'badge-red',fps:24,ms:480,frames:mkF(['Idle','Wind-up','Strike','Impact','Win!','End'],['😤','✂️','⚡','💥','🏆','🌟']),note:'80ms per frame · attacker=scissors · defender=paper · frame 5 = win pose hold'});
+  h+=makeStrip({id:'rk_sc',name:'ROCK BREAKS SCISSORS',badge:'ROCK WIN',bc:'badge-blue',fps:24,ms:480,frames:mkF(['Idle','Wind-up','Throw','Smash','Win!','End'],['😤','🪨','💨','💥','🏆','🌟']),note:'Rock attack triggers hero_red_jump_sprites for jump arc animation'});
+  h+=makeStrip({id:'pp_rk',name:'PAPER WRAPS ROCK',badge:'PAPER WIN',bc:'badge-gold',fps:24,ms:480,frames:mkF(['Idle','Unfurl','Wrap','Trapped','Win!','End'],['😤','📄','🌀','🪨','🏆','🌟']),note:'Paper: character unfurls a scroll animation across the opponent'});
+  h+=makeSrc('/moovment/attack player.png','attack player.png');
+  h+=`</div>`;return h;
+}
 
-// Build tabs
-const tabsEl = document.getElementById('phaseTabs');
-PHASES.forEach((ph, i) => {
-  const btn = document.createElement('button');
-  btn.className = 'phase-tab' + (i === 0 ? ' active' : '');
-  btn.textContent = ph.label;
-  btn.dataset.i = i;
-  btn.onclick = () => {
-    stopPlay();
-    current = ph;
-    frame = 0;
-    document.querySelectorAll('.phase-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    render();
-  };
-  tabsEl.appendChild(btn);
+function renderMoves(){
+  let h=`<div class="panel-title">MOVEMENT ANIMATION SHEET — timing.png</div><div class="strip-section">`;
+  const rs=[
+    {id:'r_idle',name:'RED IDLE',badge:'RED IDLE',bc:'badge-red',frames:mkF(['Idle 1','Idle 2','Idle 3','Idle 4','Idle 5','Idle 6'],['🧍','🧍','🧍','🧍','🧍','🧍']),ms:2400},
+    {id:'r_walk',name:'RED WALK',badge:'RED WALK',bc:'badge-red',frames:mkF(['Step 1','Step 2','Step 3','Step 4','Step 5','Step 6'],['🚶','🚶','🚶','🚶','🚶','🚶']),ms:500},
+    {id:'r_jump',name:'RED JUMP',badge:'RED JUMP',bc:'badge-red',frames:mkF(['Crouch','Rise','Peak','Fall','Land','Idle'],['🦵','⬆','🌟','⬇','💥','🧍']),ms:500},
+    {id:'r_atk',name:'RED ATTACK',badge:'RED ATTACK',bc:'badge-red',frames:mkF(['Ready','Step','Wind','Charge','Strike','Impact','Flash','Hold'],['😤','👟','💪','⚡','🤜','💥','✨','🏆']),ms:640},
+    {id:'r_hit',name:'RED HIT',badge:'RED HIT',bc:'badge-red',frames:mkF(['React','Stagger','Spin','Down'],['😮','😵','💫','😓']),ms:320},
+    {id:'r_die',name:'RED DIE',badge:'RED DIE',bc:'badge-red',frames:mkF(['Fall 1','Fall 2','Fall 3','Lie 1','Lie 2','Gone'],['😵','💀','⬇','💨','·','·']),ms:480},
+  ];
+  h+=`<div style="background:#13151e;border:1px solid rgba(232,67,67,0.3);border-radius:4px;padding:10px 14px;margin-bottom:8px"><span style="font-size:11px;color:var(--red);letter-spacing:2px;text-transform:uppercase">PLAYER RED — ALL ANIMATION STATES</span></div>`;
+  rs.forEach(s=>h+=makeStrip({id:s.id,name:s.name,badge:s.badge,bc:s.bc,frames:s.frames,fps:24,ms:s.ms}));
+  const bs=[
+    {id:'b_idle',name:'BLUE IDLE',badge:'BLUE IDLE',bc:'badge-blue',frames:mkF(['Idle 1','Idle 2','Idle 3','Idle 4','Idle 5'],['🧍','🧍','🧍','🧍','🧍']),ms:2400},
+    {id:'b_walk',name:'BLUE WALK',badge:'BLUE WALK',bc:'badge-blue',frames:mkF(['Step 1','Step 2','Step 3','Step 4','Step 5','Step 6'],['🚶','🚶','🚶','🚶','🚶','🚶']),ms:500},
+    {id:'b_jump',name:'BLUE JUMP',badge:'BLUE JUMP',bc:'badge-blue',frames:mkF(['Crouch','Rise','Peak','Fall','Land','Idle'],['🦵','⬆','🌟','⬇','💥','🧍']),ms:500},
+    {id:'b_atk',name:'BLUE ATTACK',badge:'BLUE ATTACK',bc:'badge-blue',frames:mkF(['Ready','Step','Wind','Charge','Strike','Impact','Flash','Hold'],['😤','👟','💪','⚡','🤜','💥','✨','🏆']),ms:640},
+    {id:'b_hit',name:'BLUE HIT',badge:'BLUE HIT',bc:'badge-blue',frames:mkF(['React','Stagger','Spin','Down'],['😮','😵','💫','😓']),ms:320},
+    {id:'b_die',name:'BLUE DIE',badge:'BLUE DIE',bc:'badge-blue',frames:mkF(['Fall 1','Fall 2','Fall 3','Lie 1','Lie 2','Gone'],['😵','💀','⬇','💨','·','·']),ms:480},
+  ];
+  h+=`<div style="background:#13151e;border:1px solid rgba(61,143,232,0.3);border-radius:4px;padding:10px 14px;margin:4px 0 8px"><span style="font-size:11px;color:var(--blue);letter-spacing:2px;text-transform:uppercase">PLAYER BLUE (AI) — ALL ANIMATION STATES</span></div>`;
+  bs.forEach(s=>h+=makeStrip({id:s.id,name:s.name,badge:s.badge,bc:s.bc,frames:s.frames,fps:24,ms:s.ms}));
+  h+=makeSrc('/moovment/timing.png','timing.png');
+  h+=`</div>`;return h;
+}
+
+function renderJudge(){
+  let h=`<div class="panel-title">JUDGE / REFEREE STRIP — judge.png</div><div class="strip-section">`;
+  h+=makeStrip({id:'judge',name:'COIN FLIP SEQUENCE',badge:'REFEREE',bc:'badge-gold',fps:24,ms:1500,frames:mkF(['Enter arena','Raise flags','Spin flags','Lower flag','Point: GO!'],['🦖','🚩','🌀','⬇','👉']),note:'Plays once at match start · Frame 5 holds until board becomes active'});
+  h+=`<div class="strip-card"><div class="strip-header"><span class="strip-name">OUTCOME VARIANTS</span><span class="team-badge badge-gold">2 RESULTS</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0"><div style="padding:14px;border-right:1px solid var(--border)"><div style="font-size:10px;color:var(--red);letter-spacing:1px;margin-bottom:8px">RED STARTS FIRST</div><div style="font-size:10px;color:#9ca3af;line-height:1.8">Lowers blue flag<br>Raises red flag<br>Points right to red side</div></div><div style="padding:14px"><div style="font-size:10px;color:var(--blue);letter-spacing:1px;margin-bottom:8px">BLUE (AI) STARTS</div><div style="font-size:10px;color:#9ca3af;line-height:1.8">Lowers red flag<br>Raises blue flag<br>Points left to blue side</div></div></div></div>`;
+  h+=makeSrc('/moovment/judge.png','judge.png');
+  h+=`</div>`;return h;
+}
+
+function renderRolesRed(){
+  let h=`<div class="panel-title">RED ROLES — dicoy flag only red.png</div><div class="strip-section">`;
+  h+=makeStrip({id:'rf',name:'FLAG-BEARER WALK',badge:'RED FLAG',bc:'badge-red',fps:24,ms:600,frames:mkF(['Idle','Step R1','Step R2','Step L1','Step L2','Flag Jump'],['🧍','🚩','🚩','🚩','🚩','⬆'])});
+  h+=makeStrip({id:'rd',name:'DECOY WALK',badge:'RED DECOY',bc:'badge-red',fps:24,ms:600,frames:mkF(['Idle','Step R1','Step R2','Step L1','Step L2','Taunt Jump'],['🧍','🎭','🎭','🎭','🎭','😈'])});
+  h+=makeStrip({id:'ri',name:'IDLE ANIMATION SET',badge:'IDLE TYPES',bc:'badge-red',fps:24,ms:1600,frames:mkF(['Walk loop','Jump-in-place','Yawn','Idle hold'],['🚶','🦵','🥱','🧍']),note:'Yawn triggers after 5+ seconds of inaction'});
+  h+=makeStrip({id:'rw',name:'WEAPON HOLD POSES',badge:'COMBAT',bc:'badge-red',fps:24,ms:300,frames:mkF(['Rock hold','Paper hold','Scissors hold'],['🪨','📄','✂️']),note:'Shown during Phase 1 reveal and weapon display in duels'});
+  h+=makeSrc('/moovment/dicoy flag only red.png','dicoy flag only red.png');
+  h+=`</div>`;return h;
+}
+
+function renderRolesBlue(){
+  let h=`<div class="panel-title">BLUE ROLES — dickoy flag wait ex.png</div><div class="strip-section">`;
+  h+=makeStrip({id:'bf',name:'FLAG-BEARER WALK',badge:'BLUE FLAG',bc:'badge-blue',fps:24,ms:600,frames:mkF(['Idle','Step R1','Step R2','Step L1','Step L2','Flag Jump'],['🧍','🚩','🚩','🚩','🚩','⬆'])});
+  h+=makeStrip({id:'bd',name:'DECOY WALK',badge:'BLUE DECOY',bc:'badge-blue',fps:24,ms:600,frames:mkF(['Idle','Step R1','Step R2','Step L1','Step L2','Taunt Jump'],['🧍','🎭','🎭','🎭','🎭','😈'])});
+  h+=makeStrip({id:'bi',name:'IDLE ANIMATION SET',badge:'IDLE TYPES',bc:'badge-blue',fps:24,ms:1600,frames:mkF(['Walk loop','Jump-in-place','Yawn','Idle hold'],['🚶','🦵','🥱','🧍'])});
+  h+=makeStrip({id:'bu',name:'BOARD INDICATORS',badge:'UI STATES',bc:'badge-blue',fps:24,ms:400,frames:mkF(['Selectable','Selected','Enemy target','Can move','Battle'],['🔵','💛','🔴','🟢','⚔']),note:'Selection glow · Valid move dot · Enemy crosshair · Duel trigger'});
+  h+=makeSrc('/moovment/dickoy flag wait ex.png','dickoy flag wait ex.png');
+  h+=`</div>`;return h;
+}
+
+function renderRef(){
+  const rows=[
+    ['IDLE','6','2400','loop','ease-in-out','Always on board'],
+    ['WALK','6','500','loop','steps(6)','Move to empty tile'],
+    ['JUMP','6','500','once','ease-out','Jump over neutral zone'],
+    ['ATTACK','8','640','once','ease-in','Start a duel'],
+    ['HIT','4','320','once','ease-out','Receive attack'],
+    ['DIE','6','480','once','ease-in','Eliminated'],
+    ['ROCK ATTACK','6','480','once','ease-in','Weapon=Rock duel'],
+    ['PAPER ATTACK','6','480','once','ease-in','Weapon=Paper duel'],
+    ['SCISSORS ATTACK','6','480','once','ease-in','Weapon=Scissors duel'],
+    ['WIN POSE','4','320','hold','ease-out','Duel winner'],
+    ['FLAG WALK','6','600','loop','linear','Flag-bearer moving'],
+    ['DECOY WALK','6','600','loop','linear','Decoy moving'],
+    ['FLAG IDLE','4','1600','loop','ease-in-out','Flag-bearer still'],
+    ['DECOY IDLE','4','1600','loop','ease-in-out','Decoy still'],
+    ['JUDGE FLIP','5','1500','once','ease-out','Match start'],
+    ['WEAPON REVEAL','3','300','once','ease-out','Phase 1 to 2'],
+    ['WEAPON HIDE','2','400','once','ease-in','After reveal ends'],
+    ['DEATH','4','300','once','ease-in','Unit eliminated'],
+  ];
+  let h=`<div class="panel-title">COMPLETE ANIMATION REFERENCE</div><div style="overflow-x:auto;margin-bottom:14px"><table class="ref-table"><thead><tr>${['ANIMATION','FRAMES','MS','MODE','EASING','TRIGGER'].map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+  rows.forEach(r=>{const mc=r[3]==='loop'?'#86efac':r[3]==='hold'?'#fbbf24':'#9ca3af';h+=`<tr><td style="color:var(--gold)">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td style="color:${mc}">${r[3]}</td><td style="color:#8fd7d0">${r[4]}</td><td style="color:var(--muted)">${r[5]}</td></tr>`;});
+  h+=`</tbody></table></div>`;
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">`;
+  [['/moovment/timing.png','timing.png'],['/moovment/attack player.png','attack player.png'],['/moovment/judge.png','judge.png'],['/moovment/dicoy flag only red.png','dicoy flag only red.png']].forEach(([s,a])=>{
+    h+=`<div class="strip-card"><div class="strip-header"><span class="strip-name" style="font-size:10px">${a}</span></div><div class="src-img-wrap"><img src="${s}" alt="${a}" onerror="this.outerHTML='<div class=missing>${a}</div>'"></div></div>`;
+  });
+  h+=`</div>`;return h;
+}
+
+const VIEWS={board:renderBoard,attack:renderAttack,moves:renderMoves,judge:renderJudge,roles_red:renderRolesRed,roles_blue:renderRolesBlue,ref:renderRef};
+
+function stopAll(){Object.keys(TIMERS).forEach(k=>{clearInterval(TIMERS[k]);delete TIMERS[k]});}
+
+function updateFrame(id,f,fc){
+  const sc=document.querySelector(`.scrub-input[data-id="${id}"]`);
+  const ctr=document.getElementById(`fc-${id}`);
+  const tb=document.getElementById(`tb-${id}`);
+  if(sc)sc.value=f;
+  if(ctr)ctr.textContent=`${f+1} / ${fc}`;
+  if(tb)tb.style.width=`${((f+1)/fc)*100}%`;
+  for(let i=0;i<fc;i++){const el=document.getElementById(`fi-${id}-${i}`);if(el)el.classList.toggle('active',i===f);}
+}
+
+function attachPlayback(){
+  document.querySelectorAll('.play-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=btn.dataset.id,fc=parseInt(btn.dataset.fc)||6,ms=parseInt(btn.dataset.ms)||160;
+      if(TIMERS[id]){clearInterval(TIMERS[id]);delete TIMERS[id];btn.textContent='play';btn.classList.remove('playing');return;}
+      btn.textContent='pause';btn.classList.add('playing');
+      let f=0;
+      TIMERS[id]=setInterval(()=>{f=(f+1)%fc;updateFrame(id,f,fc);},Math.max(60,ms));
+    });
+  });
+  document.querySelectorAll('.scrub-input').forEach(sc=>{
+    sc.addEventListener('input',()=>{const id=sc.dataset.id,fc=parseInt(sc.dataset.fc);updateFrame(id,parseInt(sc.value),fc);});
+  });
+}
+
+function show(key){
+  stopAll();
+  document.getElementById('mainContent').innerHTML=VIEWS[key]?VIEWS[key]():'';
+  setInfo(key);
+  attachPlayback();
+}
+
+document.getElementById('tabRow').addEventListener('click',e=>{
+  const t=e.target.closest('.tab');if(!t)return;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  t.classList.add('active');show(t.dataset.view);
 });
 
-function stopPlay() {
-  playing = false;
-  if (rafId) cancelAnimationFrame(rafId);
-  document.getElementById('playBtn').textContent = '▶ Play';
-}
-
-function render() {
-  const ph = current;
-  // Info
-  document.getElementById('infoTitle').textContent = ph.label;
-  document.getElementById('infoTitle').style.color = ph.color;
-  const grid = document.getElementById('infoGrid');
-  grid.innerHTML = '';
-  Object.entries(ph.info).forEach(([k,v]) => {
-    const r = document.createElement('div'); r.className = 'info-row';
-    r.innerHTML = `<span>${k}</span><strong>${v}</strong>`;
-    grid.appendChild(r);
-  });
-
-  // Badge
-  document.getElementById('phaseBadge').textContent = ph.label;
-  document.getElementById('phaseBadge').style.background = ph.badgeBg;
-  document.getElementById('phaseBadge').style.color = ph.color;
-  document.getElementById('tlFps').textContent = `${ph.fps} fps · ${ph.frames} frames · ${(ph.frames/ph.fps).toFixed(2)}s`;
-  document.getElementById('fpsInfo').textContent = ph.fps + ' fps';
-
-  // Scrubber
-  const sc = document.getElementById('scrubber');
-  sc.max = ph.frames; sc.value = 0;
-
-  // Ruler
-  const ruler = document.getElementById('frameRuler');
-  ruler.innerHTML = '';
-  const ticks = Math.min(ph.frames + 1, 20);
-  const step = Math.max(1, Math.ceil(ph.frames / (ticks - 1)));
-  ruler.style.display = 'flex';
-  for (let i = 0; i < ticks; i++) {
-    const f = Math.min(i * step, ph.frames);
-    const t = document.createElement('div');
-    t.className = 'frame-tick';
-    t.textContent = Math.round(f);
-    t.style.flex = '1';
-    ruler.appendChild(t);
-  }
-
-  // Tracks
-  const wrapper = document.getElementById('tracksWrapper');
-  const ph2 = document.getElementById('playheadGlobal');
-  wrapper.innerHTML = '';
-  wrapper.appendChild(ph2);
-  ph2.style.left = '110px';
-
-  ph.tracks.forEach(track => {
-    const row = document.createElement('div');
-    row.className = 'track-row';
-    const lbl = document.createElement('div');
-    lbl.className = 'track-label';
-    const dot = document.createElement('div');
-    dot.className = 'track-dot'; dot.style.background = track.color;
-    lbl.appendChild(dot);
-    lbl.appendChild(document.createTextNode(track.label));
-    row.appendChild(lbl);
-
-    const area = document.createElement('div');
-    area.className = 'track-bar-area';
-    area.style.width = TRACK_W + 'px';
-
-    // Segments
-    for (let ki = 0; ki < track.kfs.length - 1; ki++) {
-      const a = track.kfs[ki], b = track.kfs[ki+1];
-      const x0 = (a.f / ph.frames) * TRACK_W;
-      const x1 = (b.f / ph.frames) * TRACK_W;
-      const seg = document.createElement('div');
-      seg.className = 'seg';
-      seg.style.left = x0 + 'px';
-      seg.style.width = (x1 - x0) + 'px';
-      seg.style.background = track.color;
-      area.appendChild(seg);
-    }
-
-    // Keyframes
-    track.kfs.forEach(kf => {
-      const x = (kf.f / ph.frames) * TRACK_W;
-      const d = document.createElement('div');
-      d.className = 'kf';
-      d.style.left = x + 'px';
-      d.style.background = track.color;
-      const tip = document.createElement('div');
-      tip.className = 'kf-label';
-      tip.textContent = `F${Math.round(kf.f)}: ${kf.v}`;
-      d.appendChild(tip);
-      area.appendChild(d);
-    });
-
-    row.appendChild(area);
-    wrapper.appendChild(row);
-  });
-
-  updatePlayhead(0);
-}
-
-function updatePlayhead(f) {
-  const ph = current;
-  const pct = f / ph.frames;
-  const x = 110 + pct * TRACK_W;
-  document.getElementById('playheadGlobal').style.left = x + 'px';
-  document.getElementById('frameCounter').textContent = `F ${Math.round(f)} / ${ph.frames}`;
-  document.getElementById('scrubber').value = f;
-}
-
-document.getElementById('scrubber').oninput = e => {
-  frame = parseFloat(e.target.value);
-  updatePlayhead(frame);
-};
-
-document.getElementById('playBtn').onclick = () => {
-  if (playing) { stopPlay(); return; }
-  playing = true;
-  document.getElementById('playBtn').textContent = '⏸ Pause';
-  if (frame >= current.frames) frame = 0;
-  t0 = null;
-  const durMs = (current.frames / current.fps) * 1000;
-  function step(ts) {
-    if (!t0) t0 = ts;
-    const elapsed = ts - t0;
-    const t = (elapsed % durMs) / durMs;
-    frame = t * current.frames;
-    updatePlayhead(frame);
-    if (playing) rafId = requestAnimationFrame(step);
-  }
-  rafId = requestAnimationFrame(step);
-};
-
-render();
+show('board');
 </script>
 </body>
 </html>

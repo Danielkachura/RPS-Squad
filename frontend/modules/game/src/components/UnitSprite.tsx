@@ -1,4 +1,6 @@
 import { Piece } from "@shared/types";
+import { AnimatedSprite } from "../../../../app/src/animation/AnimatedSprite";
+import type { StripName } from "../../../../app/src/animation/strips";
 
 interface UnitSpriteProps {
   piece:         Piece;
@@ -44,13 +46,22 @@ function getSrc(piece: Piece): string {
   return (piece.weapon && CPU_IMG[piece.weapon]) ?? CPU_IMG.idle;
 }
 
+function getAnimationName(piece: Piece, selected: boolean, isRevealPhase: boolean): StripName {
+  if (isRevealPhase) return piece.owner === "player" ? "red_weapon_reveal" : "blue_weapon_reveal";
+  if (piece.owner === "player") return "red_idle";
+  if (selected) return "blue_selected";
+  if (piece.silhouette) return "blue_silhouette";
+  return "blue_idle";
+}
+
 export function UnitSprite({
   piece, selected, isSelectable, isValidTarget, isRevealPhase, isDying, isMoving = false, onClick,
 }: UnitSpriteProps) {
   const isPlayer = piece.owner === "player";
-  const showWeapon = !piece.silhouette && piece.weapon;
+  const showWeapon = !!piece.weapon && (isRevealPhase || isPlayer);
   const showSelectableHint = isSelectable && !selected && !isValidTarget && !isRevealPhase;
   const isRevealFlagChoice = isRevealPhase && isPlayer;
+  const animateIdle = isPlayer && !isRevealPhase && !selected && !isValidTarget && !isMoving && !isDying;
 
   // Gold ring when selected, gold pulse when valid target
   let outline = "none";
@@ -103,12 +114,10 @@ export function UnitSprite({
         animation:    isDying ? "unitDie 0.5s ease forwards" : undefined,
       }}
     >
-      <img
-        src={getSrc(piece)}
-        alt=""
-        draggable={false}
-        style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
-        onError={(e) => { (e.target as HTMLImageElement).style.visibility = "hidden"; }}
+      <AnimatedSprite
+        name={getAnimationName(piece, selected, isRevealPhase)}
+        className={animateIdle ? "idle-breathing" : undefined}
+        style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center", display: "block" }}
       />
 
       {/* Weapon icon — player always, CPU only when revealed */}

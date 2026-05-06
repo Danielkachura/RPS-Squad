@@ -130,12 +130,52 @@ body {
   50%       { box-shadow: 0 0 8px 2px rgba(255, 75, 75, 0.25); }
 }
 
+@keyframes idleBreathing {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+@keyframes duelSlideIn {
+  from { opacity: 0; transform: translateY(-100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes boardAmbientPulse {
+  0%, 100% { box-shadow: inset 0 2px 12px rgba(0,0,0,0.55), 0 8px 32px rgba(0,0,0,0.6); }
+  50% { box-shadow: inset 0 2px 16px rgba(0,0,0,0.6), 0 10px 36px rgba(0,0,0,0.72); }
+}
+
+.idle-breathing {
+  animation: idleBreathing 1600ms ease-in-out infinite;
+}
+
+.board-cell {
+  transition: transform 100ms ease;
+}
+
+.board-cell:hover {
+  transform: scale(1.12);
+}
+
+.game-board-ambient {
+  animation: boardAmbientPulse 6s ease-in-out infinite;
+}
+
 .piece-dying {
   animation: unitDie 0.5s ease forwards;
 }
 
+.valid-attack-target {
+  animation: targetPulse 0.8s ease infinite;
+  box-shadow: inset 0 0 0 3px var(--color-valid-target);
+}
+
+.current-turn-pulse {
+  animation: playerGlow 1.2s ease infinite;
+}
+
 .duel-overlay {
-  animation: fadeIn 0.25s ease;
+  animation: duelSlideIn 300ms ease-out;
 }
 
 .game-over-overlay {

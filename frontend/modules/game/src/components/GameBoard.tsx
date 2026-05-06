@@ -22,6 +22,7 @@ export function GameBoard({
   return (
     <div
       data-testid="game-board"
+      className="game-board-ambient"
       style={{
         display:             "inline-grid",
         gridTemplateColumns: `repeat(${BOARD_COLS}, var(--cell-size))`,
