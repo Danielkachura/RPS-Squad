@@ -25,8 +25,12 @@ app = FastAPI(title="Squad RPS Python API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173",
-                   "http://localhost:5176", "http://127.0.0.1:5176"],
+    allow_origins=[
+        "http://localhost:5173", "http://127.0.0.1:5173",
+        "http://localhost:5176", "http://127.0.0.1:5176",
+        "https://rps-squad.vercel.app",
+    ],
+    allow_origin_regex=r"https://rps-squad-.*\.vercel\.app",
     allow_methods=["*"],
     allow_headers=["*"],
 )
